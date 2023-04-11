@@ -93,7 +93,7 @@ def convert_audio_to_text(filename='output.wav'):
     print("Converting audio to text...")
     # return "Hello World"
     with open(filename, 'rb') as audio_file:
-        response = openai.Audio.transcribe("whisper-1", audio_file)
+        response = openai.Audio.transcribe(model="whisper-1", file=audio_file, language="en")
 
     print("Response: ")
     print(response)
