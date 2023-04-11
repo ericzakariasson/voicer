@@ -5,13 +5,16 @@ import threading
 import time
 import os
 import openai
-from pynput.keyboard import Controller, Key
+from pynput import keyboard
+import threading
+
 
 # Recording settings
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
+KEY = keyboard.Key.caps_lock
 
 # OpenAI settings
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -22,17 +25,40 @@ stream = None
 frames = []
 is_recording = False
 
-# Pynput keyboard controller
 
-keyboard = Controller()
+class GlobalKeyListener:
+    def __init__(self, app):
+        self.app = app
+        self.key_press_count = 0
+        self.timeout = 0.5  # Time interval in seconds
+        self.timer = None
+
+    def reset_key_press_count(self):
+        self.key_press_count = 0
+
+    def on_press(self, key):
+        if key == KEY:
+            self.key_press_count += 1
+            if self.timer is not None:
+                self.timer.cancel()
+
+            if self.key_press_count == 2:
+                self.app.toggle_recording(None)
+                self.key_press_count = 0
+            else:
+                self.timer = threading.Timer(self.timeout, self.reset_key_press_count)
+                self.timer.start()
+
+
+controller = keyboard.Controller()
 
 def type_text(text):
     for char in text:
         if char == '\n':
-            keyboard.press(Key.enter)
-            keyboard.release(Key.enter)
+            controller.press(keyboard.Key.enter)
+            controller.release(keyboard.Key.enter)
         else:
-            keyboard.type(char)
+            controller.type(char)
         time.sleep(0.01)
 
 
@@ -75,26 +101,33 @@ def convert_audio_to_text(filename='output.wav'):
 
 
 class Voicer(rumps.App):
-    def __init__(self):
-        super(Voicer, self).__init__("Voicer")
-        self.menu = [rumps.MenuItem(
-            "Start Recording", callback=self.toggle_recording)]
+    def __init__(self, *args, **kwargs):
+        super(Voicer, self).__init__(*args, **kwargs)
+        self.menu_item = rumps.MenuItem("Record")
+        self.menu_item.set_callback(self.toggle_recording)
+        self.key_listener = GlobalKeyListener(self)
+        self.menu = [self.menu_item]
 
     def toggle_recording(self, sender):
         global is_recording
 
         if not is_recording:
             is_recording = True
-            sender.title = 'Stop Recording'
+            self.menu_item.title = 'Stop'
             threading.Thread(target=start_recording).start()
         else:
             is_recording = False
-            sender.title = 'Start Recording'
+            self.menu_item.title = 'Record'
             save_audio_file()
             transcription = convert_audio_to_text()
             if transcription:
                 type_text(transcription)
 
+def main():
+    app = Voicer("Voicer 🎙")
+    with keyboard.Listener(on_press=app.key_listener.on_press) as listener:
+        app.run()
+        listener.join()
 
 if __name__ == "__main__":
-    Voicer().run()
+    main()
