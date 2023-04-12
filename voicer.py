@@ -89,11 +89,11 @@ def save_audio_file(filename='output.wav'):
     stream.close()
 
 
-def convert_audio_to_text(filename='output.wav'):
+def convert_audio_to_text(selected_language, filename='output.wav'):
     print("Converting audio to text...")
     # return "Hello World"
     with open(filename, 'rb') as audio_file:
-        response = openai.Audio.transcribe(model="whisper-1", file=audio_file, language="en")
+        response = openai.Audio.transcribe(model="whisper-1", file=audio_file, language=selected_language)
 
     print("Response: ")
     print(response)
@@ -105,8 +105,24 @@ class Voicer(rumps.App):
         super(Voicer, self).__init__(*args, **kwargs)
         self.menu_item = rumps.MenuItem("Record")
         self.menu_item.set_callback(self.toggle_recording)
+         # Language submenu
+        self.language_submenu = rumps.MenuItem("Language")
+        self.languages = ["en", "sv"]  # Add more languages as needed
+        self.selected_language = self.languages[0]
+        for language in self.languages:
+            language_item = rumps.MenuItem(language, callback=self.select_language)
+            if language == self.selected_language:
+                language_item.state = 1
+            self.language_submenu.add(language_item)
+
+        self.menu = [self.menu_item, self.language_submenu]
         self.key_listener = GlobalKeyListener(self)
-        self.menu = [self.menu_item]
+
+    def select_language(self, sender):
+        for language_item in self.language_submenu.values():
+            language_item.state = 0
+        sender.state = 1
+        self.selected_language = sender.title
 
     def toggle_recording(self, sender):
         global is_recording
@@ -119,7 +135,7 @@ class Voicer(rumps.App):
             is_recording = False
             self.menu_item.title = 'Record'
             save_audio_file()
-            transcription = convert_audio_to_text()
+            transcription = convert_audio_to_text(self.selected_language)
             if transcription:
                 type_text(transcription)
 
