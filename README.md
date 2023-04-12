@@ -1,4 +1,4 @@
-# voicer
+# voicer ⚫️
 
 A dictation application that transcribes your voice to text using OpenAI's Whisper model.
 
