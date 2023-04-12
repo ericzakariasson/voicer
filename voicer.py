@@ -53,12 +53,15 @@ def type_text(text):
 # Voicer App
 class Voicer(rumps.App):
     def __init__(self, *args, **kwargs):
-        super(Voicer, self).__init__(*args, **kwargs)
+        super(Voicer, self).__init__(title="voicer ⚫️", name="voicer ⚫️", *args, **kwargs)
+        self.languages = ["en-US", "sv-SE"]  # Add more languages as needed
+        self.selected_language = self.languages[0]
+
         self.menu_item = rumps.MenuItem("Record")
         self.menu_item.set_callback(self.start_transcription)
         self.language_submenu = self.create_language_submenu()
         self.menu = [self.menu_item, self.language_submenu]
-        
+
         self.key_listener = GlobalKeyListener(callback=self.start_transcription)
 
         with microphone as source:
@@ -66,11 +69,9 @@ class Voicer(rumps.App):
 
     def create_language_submenu(self):
         language_submenu = rumps.MenuItem("Language")
-        languages = ["en", "sv"]  # Add more languages as needed
-        selected_language = languages[0]
-        for language in languages:
+        for language in self.languages:
             language_item = rumps.MenuItem(language, callback=self.select_language)
-            if language == selected_language:
+            if language == self.selected_language:
                 language_item.state = 1
             language_submenu.add(language_item)
         return language_submenu
@@ -85,15 +86,20 @@ class Voicer(rumps.App):
         self.menu_item.title = 'Recording'
         with microphone as source:
             print("Listening...")
-            rumps.notification(title="voicer ⚫️", subtitle="Recording...", message="    ", sound=False)
-            audio = recognizer.listen(source, timeout=5, phrase_time_limit=5)
-        transcription = recognizer.recognize_whisper_api(audio, api_key=openai.api_key)
+            rumps.notification(title="voicer ⚫️", subtitle="Recording...", message="", sound=False)
+            audio = recognizer.listen(source, timeout=3, phrase_time_limit=10)
+        if self.selected_language != "en-US":
+            print(f"Model: Google ({self.selected_language})")
+            transcription = recognizer.recognize_google(audio, language=self.selected_language)
+        else:
+            print(f"Model: Whisper")
+            transcription = recognizer.recognize_whisper_api(audio, api_key=openai.api_key)
         print(f"Transcription: {transcription}")
         type_text(transcription)
 
 # Main function
 def main():
-    app = Voicer("voicer ⚫️")
+    app = Voicer()
     with keyboard.Listener(on_press=app.key_listener.on_press) as listener:
         app.run()
         listener.join()
