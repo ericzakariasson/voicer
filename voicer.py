@@ -84,18 +84,26 @@ class Voicer(rumps.App):
 
     def start_transcription(self, sender=None):
         self.menu_item.title = 'Recording'
-        with microphone as source:
-            print("Listening...")
-            rumps.notification(title="voicer ⚫️", subtitle="Recording...", message="", sound=False)
-            audio = recognizer.listen(source, timeout=3, phrase_time_limit=10)
-        if self.selected_language != "en-US":
-            print(f"Model: Google ({self.selected_language})")
-            transcription = recognizer.recognize_google(audio, language=self.selected_language)
-        else:
-            print(f"Model: Whisper")
-            transcription = recognizer.recognize_whisper_api(audio, api_key=openai.api_key)
-        print(f"Transcription: {transcription}")
-        type_text(transcription)
+        try:
+            with microphone as source:
+                print("Listening...")
+                rumps.notification(title="voicer ⚫️", subtitle="Recording...", message="", sound=False)
+                audio = recognizer.listen(source, timeout=3, phrase_time_limit=10)
+            if self.selected_language != "en-US":
+                print(f"Model: Google ({self.selected_language})")
+                transcription = recognizer.recognize_google(audio, language=self.selected_language)
+            else:
+                print(f"Model: Whisper")
+                transcription = recognizer.recognize_whisper_api(audio, api_key=openai.api_key)
+            print(f"Transcription: {transcription}")
+            type_text(transcription)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            rumps.notification(title="voicer ⚫️", subtitle="An error occurred", message=str(e), sound=False)
+        finally:
+            self.menu_item.title = 'Record'
+
+
 
 # Main function
 def main():
