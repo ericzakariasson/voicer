@@ -80,7 +80,7 @@ class Voicer(rumps.App):
     def create_language_submenu(self):
         language_submenu = rumps.MenuItem("Language")
         for language in self.languages:
-            language_item = rumps.MenuItem(title=f"{language['icon']} {language['name']}" , callback=lambda sender: self.select_language(sender, language))
+            language_item = rumps.MenuItem(title=f"{language['icon']} {language['name']}", callback=lambda sender, lang=language: self.select_language(sender, lang))
             if language['code'] == self.selected_language['code']:
                 language_item.state = 1
             language_submenu.add(language_item)
@@ -99,7 +99,7 @@ class Voicer(rumps.App):
                 print("Listening...")
                 rumps.notification(title="voicer", subtitle=f"Recording ({self.selected_language['icon']})", message="", sound=False)
                 audio = recognizer.listen(source, timeout=3, phrase_time_limit=10)
-            if self.selected_language != "en-US":
+            if self.selected_language['code'] != "en-US":
                 print(f"Model: Google ({self.selected_language['name']})")
                 transcription = recognizer.recognize_google(audio, language=self.selected_language['code'])
             else:
