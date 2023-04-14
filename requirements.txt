@@ -1,13 +1,17 @@
 aiohttp==3.8.4
 aiosignal==1.3.1
+altgraph==0.17.3
 async-timeout==4.0.2
 attrs==22.2.0
 certifi==2022.12.7
 charset-normalizer==3.1.0
 frozenlist==1.3.3
 idna==3.4
+macholib==1.16.2
+modulegraph==0.19.3
 multidict==6.0.4
 openai==0.27.4
+py2app==0.28.5
 PyAudio==0.2.13
 pynput==1.7.6
 pyobjc-core==9.0.1

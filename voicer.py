@@ -63,7 +63,7 @@ def type_text(text):
 # Voicer App
 class Voicer(rumps.App):
     def __init__(self, *args, **kwargs):
-        super(Voicer, self).__init__(title="voicer", name="voicer", *args, **kwargs)
+        super(Voicer, self).__init__(title="🔘 voicer", name="voicer", *args, **kwargs)
         self.languages = languages
         self.selected_language = self.languages[0]
 
