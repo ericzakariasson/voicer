@@ -16,6 +16,16 @@ microphone = sr.Microphone()
 controller = keyboard.Controller()
 KEY = keyboard.Key.caps_lock
 
+languages = [{
+    "name": "English",
+    "code": "en-US",
+    "icon": "🇺🇸",
+}, {
+    "name": "Swedish",
+    "code": "sv-SE",
+    "icon": "🇸🇪",
+}]
+
 # Global Key Listener
 class GlobalKeyListener:
     def __init__(self, callback):
@@ -53,8 +63,8 @@ def type_text(text):
 # Voicer App
 class Voicer(rumps.App):
     def __init__(self, *args, **kwargs):
-        super(Voicer, self).__init__(title="voicer ⚫️", name="voicer ⚫️", *args, **kwargs)
-        self.languages = ["en-US", "sv-SE"]  # Add more languages as needed
+        super(Voicer, self).__init__(title="voicer", name="voicer", *args, **kwargs)
+        self.languages = languages
         self.selected_language = self.languages[0]
 
         self.menu_item = rumps.MenuItem("Record")
@@ -70,28 +80,28 @@ class Voicer(rumps.App):
     def create_language_submenu(self):
         language_submenu = rumps.MenuItem("Language")
         for language in self.languages:
-            language_item = rumps.MenuItem(language, callback=self.select_language)
-            if language == self.selected_language:
+            language_item = rumps.MenuItem(title=f"{language['icon']} {language['name']}" , callback=lambda sender: self.select_language(sender, language))
+            if language['code'] == self.selected_language['code']:
                 language_item.state = 1
             language_submenu.add(language_item)
         return language_submenu
 
-    def select_language(self, sender):
+    def select_language(self, sender, language):
         for language_item in self.language_submenu.values():
             language_item.state = 0
         sender.state = 1
-        self.selected_language = sender.title
+        self.selected_language = language
 
     def start_transcription(self, sender=None):
         self.menu_item.title = 'Recording'
         try:
             with microphone as source:
                 print("Listening...")
-                rumps.notification(title="voicer ⚫️", subtitle="Recording...", message="", sound=False)
+                rumps.notification(title="voicer", subtitle=f"Recording ({self.selected_language['icon']})", message="", sound=False)
                 audio = recognizer.listen(source, timeout=3, phrase_time_limit=10)
             if self.selected_language != "en-US":
-                print(f"Model: Google ({self.selected_language})")
-                transcription = recognizer.recognize_google(audio, language=self.selected_language)
+                print(f"Model: Google ({self.selected_language['name']})")
+                transcription = recognizer.recognize_google(audio, language=self.selected_language['code'])
             else:
                 print(f"Model: Whisper")
                 transcription = recognizer.recognize_whisper_api(audio, api_key=openai.api_key)
@@ -99,7 +109,7 @@ class Voicer(rumps.App):
             type_text(transcription)
         except Exception as e:
             print(f"An error occurred: {e}")
-            rumps.notification(title="voicer ⚫️", subtitle="An error occurred", message=str(e), sound=False)
+            rumps.notification(title="voicer", subtitle="An error occurred", message=str(e), sound=False)
         finally:
             self.menu_item.title = 'Record'
 
